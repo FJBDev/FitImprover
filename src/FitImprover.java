@@ -39,30 +39,47 @@ public class FitImprover {
       // i.e.: Whenever I find avg_speed ?
       //final List<String> dataWithPower = addPowerData(cleanLines);
 
+      //Writing the modified lines to a new CSV file
+      writeDataWithPower(fileNameWithoutExtension, cleanLines); // dataWithPower );
+      
       //Convert the CSV file to FIT file
       //file-withpower.fit"
 
       convertCsvToFit(fileNameWithoutExtension + "-withPower");
    }
 
-   private static List<String> removeErroneousData(final String fileName) {
-
+   private static void writeDataWithPower(String fileNameWithoutExtension, List<String> dataWithPower) {
+	   
       final String currentDirectory = getCurrentDirectory();
-      final File fixedCsvFile = new File(currentDirectory, fileName + "-modified" + ".csv");
+	   final File fixedCsvFile = new File(currentDirectory, fileNameWithoutExtension + "-withPower" + ".csv");
+
+	      try {
+	         fixedCsvFile.createNewFile();
+	      } catch (final IOException e1) {
+	         e1.printStackTrace();
+	      }
+	      
+	   try (FileWriter writer = new FileWriter(fixedCsvFile)) {
+
+
+	         //Write the modified lines in the new csv file
+	         for (final String line : dataWithPower) {
+
+	             writer.write(line + System.lineSeparator());
+	         }
+	      } catch (IOException e) {
+	         e.printStackTrace();
+	      }
+	
+}
+
+private static List<String> removeErroneousData(final String fileName) {
 
       final List<String> cleanLines = new ArrayList<>();
 
       try {
-         fixedCsvFile.createNewFile();
-      } catch (final IOException e1) {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
-      }
 
-      try (FileWriter writer = new FileWriter(fixedCsvFile)) {
-
-         Thread.sleep(1000);
-
+      final String currentDirectory = getCurrentDirectory();
          final File csvFile = new File(currentDirectory, fileName + ".csv");
          final List<String> lines = Files.readAllLines(Paths.get(csvFile.toURI()));
 
@@ -70,19 +87,36 @@ public class FitImprover {
          for (final String line : lines) {
 
             if (line.contains("unknown") ||
-                  line.contains("developer_data_id")) {
+                  line.startsWith("Data,0,developer_data_id,developer_data_index,\"") ||
+                  line.startsWith("Definition,0,field_description,developer_data_index,") ||
+                  line.startsWith("Data,0,field_description,developer_data_index,\"") ) {
                continue;
             }
+            
+            //This is where it gets trickier
+            if(line.contains(",charge,"))
+            {
+            	//We remove the data after 2 ','
+            	// Example : ,null,charge,"76",%,,,,
+            	// =>        ,null,,,,,
+            	
+            	int baseIndex = line.indexOf(",charge");
+            	String chargeString = line.substring(baseIndex);
+            	int index = chargeString.indexOf(',', 8);
+            	index = chargeString.indexOf(',', index+1);
+            	
+            	String cleanedLine =line.replace(line.substring(baseIndex, baseIndex + index),"");
+            cleanLines.add(cleanedLine);
+            continue;
+            }
 
-            // writer.write(str + System.lineSeparator());
             cleanLines.add(line);
          }
-      } catch (IOException | InterruptedException e) {
+      } catch (IOException e) {
          e.printStackTrace();
       }
 
       return cleanLines;
-
    }
 
    private static void convertCsvToFit(final String fileNameWithoutExtension) {
