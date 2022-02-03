@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -14,7 +13,7 @@ public class FitImprover {
 		 private static File fitCSVTool = new File(FitImprover.class.getResource("FitCSVTool.jar").getFile());
 
 
-	 public static void main(String []args) {
+	 public static void main(final String []args) {
 
 		 if(args.length == 0)
 		 {
@@ -28,11 +27,11 @@ public class FitImprover {
 			 return;
 		 }
 
-		 String fileName = args[0];
+		 final String fileName = args[0];
 		 //Convert the FIT file to CSV
 		 convertFitToCsv(fileName);
 
-		 String fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
+		 final String fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
 
 		 //Remove the data that will prevent from converting back to FIT format
 		 removeErroneousData(fileNameWithoutExtension);
@@ -47,36 +46,36 @@ public class FitImprover {
 		 convertCsvToFit(fileNameWithoutExtension+ "-withPower");
 	   }
 
-	private static void removeErroneousData(String fileName) {
+	private static void removeErroneousData(final String fileName) {
 
-		 String currentDirectory = getCurrentDirectory();
-		 File fixedCsvFile = new File(currentDirectory , fileName + "-modified"+ ".csv");
-		 
-	
-		 
+		 final String currentDirectory = getCurrentDirectory();
+		 final File fixedCsvFile = new File(currentDirectory , fileName + "-modified"+ ".csv");
+
+
+
 		 try {
 			fixedCsvFile.createNewFile();
-		} catch (IOException e1) {
+		} catch (final IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
 		 try (FileWriter writer = new FileWriter(fixedCsvFile)) {
-			 
+
 			 Thread.sleep(1000);
-			 
-		 File csvFile = new File(currentDirectory, fileName + ".csv");
-			List<String> lines = Files.readAllLines(Paths.get(csvFile.toURI()));
+
+		 final File csvFile = new File(currentDirectory, fileName + ".csv");
+			final List<String> lines = Files.readAllLines(Paths.get(csvFile.toURI()));
 
 			//Write the modified lines in the new csv file
-			for(String str: lines) {
-				
+			for(final String str: lines) {
+
 				if(str.contains("unknown") ||
 						str.contains("developer_data_id"))
 				{
 					continue;
 				}
-				
+
 			  writer.write(str + System.lineSeparator());
 			}
 		} catch (IOException | InterruptedException e) {
@@ -85,13 +84,13 @@ public class FitImprover {
 
 	}
 
-	private static void convertCsvToFit(String fileNameWithoutExtension) {
+	private static void convertCsvToFit(final String fileNameWithoutExtension) {
 
-		 String currentDirectory = getCurrentDirectory();
-		 File csvFileToConvert = new File(currentDirectory , fileNameWithoutExtension +  ".csv");
-		 File convertedFitFile = new File(currentDirectory , fileNameWithoutExtension + ".fit");
+		 final String currentDirectory = getCurrentDirectory();
+		 final File csvFileToConvert = new File(currentDirectory , fileNameWithoutExtension +  ".csv");
+		 final File convertedFitFile = new File(currentDirectory , fileNameWithoutExtension + ".fit");
 
-		 ProcessBuilder processBuilder = new ProcessBuilder(
+		 final ProcessBuilder processBuilder = new ProcessBuilder(
 				 "java",
 				 "-jar",
 				 fitCSVTool.getAbsolutePath(),
@@ -99,43 +98,43 @@ public class FitImprover {
 				 csvFileToConvert.getAbsolutePath(),
 				 convertedFitFile.getAbsolutePath());
 		 try {
-		Process process=	processBuilder.start();
+		final Process process=	processBuilder.start();
 
-		    InputStream in = process.getInputStream();
-		    InputStream err = process.getErrorStream();
+		    final InputStream in = process.getInputStream();
+		    final InputStream err = process.getErrorStream();
 
-		    byte b[]=new byte[in.available()];
+		    final byte b[]=new byte[in.available()];
 		    in.read(b,0,b.length);
 		    System.out.println(new String(b));
 
-		    byte c[]=new byte[err.available()];
+		    final byte c[]=new byte[err.available()];
 		    err.read(c,0,c.length);
 		    System.out.println(new String(c));
 
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 
 	}
 
 	private static String getCurrentDirectory() {
-		
+
 		String currentDirectory = "";
 		try {
 			 currentDirectory = new File(FitImprover.class.getProtectionDomain().getCodeSource().getLocation()
 					    .toURI()).getPath();
-		} catch (URISyntaxException e) {
+		} catch (final URISyntaxException e) {
 			e.printStackTrace();
 		}
 
 		return currentDirectory;
 	}
 
-	private static void convertFitToCsv(String fileName) {
+	private static void convertFitToCsv(final String fileName) {
 
-		 File fileToConvert = new File(FitImprover.class.getResource(fileName).getFile());
+		 final File fileToConvert = new File(FitImprover.class.getResource(fileName).getFile());
 
-		 ProcessBuilder processBuilder = new ProcessBuilder("java", "-jar", fitCSVTool.getAbsolutePath(),fileToConvert.getAbsolutePath());
+		 final ProcessBuilder processBuilder = new ProcessBuilder("java", "-jar", fitCSVTool.getAbsolutePath(),fileToConvert.getAbsolutePath());
 		 try {
 			processBuilder.start();
 
@@ -150,7 +149,7 @@ public class FitImprover {
 //		    err.read(c,0,c.length);
 //		    System.out.println(new String(c));
 
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}
