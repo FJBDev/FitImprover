@@ -36,9 +36,10 @@ public class FitImprover {
 		 //Remove the data that will prevent from converting back to FIT format
 		 removeErroneousData(fileNameWithoutExtension);
 
-		 //Add the power values based on the speed values
+		 //Add the power values based on the speed values (and the power average values)
+		 //	 Add avg power for laps and for totals
+		// i.e.: Whenever I find avg_speed ?
 
-		 //Add the power average values
 
 		 //Convert the CSV file to FIT file
 		 //file-withpower.fit"
