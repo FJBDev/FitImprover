@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -41,45 +42,46 @@ public class FitImprover {
 
       //Writing the modified lines to a new CSV file
       writeDataWithPower(fileNameWithoutExtension, cleanLines); // dataWithPower );
-      
+
       //Convert the CSV file to FIT file
       //file-withpower.fit"
 
       convertCsvToFit(fileNameWithoutExtension + "-withPower");
    }
 
-   private static void writeDataWithPower(String fileNameWithoutExtension, List<String> dataWithPower) {
-	   
+   private static void writeDataWithPower(final String fileNameWithoutExtension, final List<String> dataWithPower) {
+
       final String currentDirectory = getCurrentDirectory();
-	   final File fixedCsvFile = new File(currentDirectory, fileNameWithoutExtension + "-withPower" + ".csv");
+      final File fixedCsvFile = new File(currentDirectory, fileNameWithoutExtension + "-withPower" + ".csv");
 
-	      try {
-	         fixedCsvFile.createNewFile();
-	      } catch (final IOException e1) {
-	         e1.printStackTrace();
-	      }
-	      
-	   try (FileWriter writer = new FileWriter(fixedCsvFile)) {
+      try {
+         fixedCsvFile.createNewFile();
+      } catch (final IOException e1) {
+         e1.printStackTrace();
+      }
 
+      //UTF8 is VERY important and REQUIRED
+      try (FileWriter writer = new FileWriter(fixedCsvFile, StandardCharsets.UTF_8)) {
 
-	         //Write the modified lines in the new csv file
-	         for (final String line : dataWithPower) {
+         //Write the modified lines in the new csv file
+         for (final String line : dataWithPower) {
 
-	             writer.write(line + System.lineSeparator());
-	         }
-	      } catch (IOException e) {
-	         e.printStackTrace();
-	      }
-	
-}
+            writer.write(line + "\n");
+         }
+         writer.flush();
+      } catch (final IOException e) {
+         e.printStackTrace();
+      }
 
-private static List<String> removeErroneousData(final String fileName) {
+   }
+
+   private static List<String> removeErroneousData(final String fileName) {
 
       final List<String> cleanLines = new ArrayList<>();
 
       try {
 
-      final String currentDirectory = getCurrentDirectory();
+         final String currentDirectory = getCurrentDirectory();
          final File csvFile = new File(currentDirectory, fileName + ".csv");
          final List<String> lines = Files.readAllLines(Paths.get(csvFile.toURI()));
 
@@ -89,34 +91,50 @@ private static List<String> removeErroneousData(final String fileName) {
             if (line.contains("unknown") ||
                   line.startsWith("Data,0,developer_data_id,developer_data_index,\"") ||
                   line.startsWith("Definition,0,field_description,developer_data_index,") ||
-                  line.startsWith("Data,0,field_description,developer_data_index,\"") ) {
+                  line.startsWith("Data,0,field_description,developer_data_index,\"")) {
                continue;
             }
-            
+
             //This is where it gets trickier
-            if(line.contains(",charge,"))
-            {
-            	//We remove the data after 2 ','
-            	// Example : ,null,charge,"76",%,,,,
-            	// =>        ,null,,,,,
-            	
-            	int baseIndex = line.indexOf(",charge");
-            	String chargeString = line.substring(baseIndex);
-            	int index = chargeString.indexOf(',', 8);
-            	index = chargeString.indexOf(',', index+1);
-            	
-            	String cleanedLine =line.replace(line.substring(baseIndex, baseIndex + index),"");
-            cleanLines.add(cleanedLine);
-            continue;
+            if (line.contains(",charge,") || line.contains("workout_type")) {
+               //We remove the data after 2 ','
+               // Example : ,null,charge,"76",%,,,,
+               // =>        ,null,,,,,
+
+               String keyword = "";
+
+               if (line.contains(",charge,")) {
+                  keyword = "charge";
+               }
+               if (line.contains(",workout_type,")) {
+                  keyword = "workout_type";
+               }
+
+               final String cleanedLine = removeSpecificFieldData(line, keyword);
+               cleanLines.add(cleanedLine);
+               continue;
             }
 
             cleanLines.add(line);
          }
-      } catch (IOException e) {
+      } catch (final IOException e) {
          e.printStackTrace();
       }
 
       return cleanLines;
+   }
+
+   private static String removeSpecificFieldData(final String line, final String keyword) {
+
+      final int baseIndex = line.indexOf(keyword);
+      final String chargeString = line.substring(baseIndex);
+
+      final int index = nthOccurrence(chargeString, ",", 3);
+
+      final String substringToReplace = line.substring(baseIndex, baseIndex + index);
+
+      final String cleanedLine = line.replace(substringToReplace, "");
+      return cleanedLine;
    }
 
    private static void convertCsvToFit(final String fileNameWithoutExtension) {
@@ -203,5 +221,22 @@ private static List<String> removeErroneousData(final String fileName) {
          builder.append(System.getProperty("line.separator"));
       }
       return builder.toString();
+   }
+
+   public static int nthOccurrence(final String str1, final String str2, final int n) {
+
+      String tempStr = str1;
+      int tempIndex = -1;
+      int finalIndex = 0;
+      for (int occurrence = 0; occurrence < n; ++occurrence) {
+         tempIndex = tempStr.indexOf(str2);
+         if (tempIndex == -1) {
+            finalIndex = 0;
+            break;
+         }
+         tempStr = tempStr.substring(++tempIndex);
+         finalIndex += tempIndex;
+      }
+      return --finalIndex;
    }
 }
