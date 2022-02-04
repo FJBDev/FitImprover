@@ -32,7 +32,6 @@ public class FitImprover {
       final String fileName = args[0];
       //Convert the FIT file to CSV
       convertFitToCsv(fileName);
-
       final String fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
 
       //Remove the data that will prevent from converting back to FIT format
