@@ -47,7 +47,7 @@ public class FitImprover {
       writeDataWithPower(fileNameWithoutExtension, dataWithPower);
 
       //Convert the CSV file to FIT file
-      convertCsvToFit(fileNameWithoutExtension + "-withPower");
+      convertCsvToFit(fileNameWithoutExtension + "-withVirtualPower");
    }
 
    private static List<String> addPowerData(final List<String> cleanLines) {
@@ -114,7 +114,7 @@ public class FitImprover {
 
    private static void writeDataWithPower(final String fileNameWithoutExtension, final List<String> dataWithPower) {
 
-      final File fixedCsvFile = new File(fileNameWithoutExtension + "-withPower" + ".csv");
+      final File fixedCsvFile = new File(fileNameWithoutExtension + "-withVirtualPower" + ".csv");
 
       try {
          fixedCsvFile.createNewFile();
@@ -178,6 +178,9 @@ public class FitImprover {
 
             cleanLines.add(line);
          }
+         
+         Files.delete(csvFile.toPath());
+         
       } catch (final IOException e) {
          e.printStackTrace();
       }
@@ -217,6 +220,9 @@ public class FitImprover {
          final Process process = processBuilder.start();
          process.waitFor();
 
+         
+         Files.delete(csvFileToConvert.toPath());
+         
          System.out.println(getProcessOutput(process));
          System.out.println("--CSV TO FIT CONVERSION DONE--");
 
