@@ -38,15 +38,75 @@ public class FitImprover {
       //Add the power values based on the speed values (and the power average values)
       //  Add avg power for laps and for totals
       // i.e.: Whenever I find avg_speed ?
-      //final List<String> dataWithPower = addPowerData(cleanLines);
+      final List<String> dataWithPower = addPowerData(cleanLines);
 
       //Writing the modified lines to a new CSV file
-      writeDataWithPower(fileNameWithoutExtension, cleanLines); // dataWithPower );
+      writeDataWithPower(fileNameWithoutExtension, dataWithPower);
 
       //Convert the CSV file to FIT file
-      //file-withpower.fit"
-
       convertCsvToFit(fileNameWithoutExtension + "-withPower");
+   }
+
+   private static List<String> addPowerData(final List<String> cleanLines) {
+
+      final List<String> linesWithPowerData = new ArrayList<>();
+
+      for (final String line : cleanLines) {
+
+         final int index = line.indexOf("speed");
+         if (index == -1) {
+            linesWithPowerData.add(line);
+            continue;
+         }
+
+         //In m/s
+         final String speedContent = line.substring(index);
+         //We need to look for this format only
+         // ,speed,"3.218",m/s
+
+         if (!speedContent.contains("\"")) {
+            linesWithPowerData.add(line);
+            continue;
+         }
+
+         String speedValue = speedContent.substring(speedContent.indexOf('"') + 1);
+         speedValue = speedValue.substring(0, speedValue.indexOf('"') - 1);
+
+         //Convert the value from m/s to mph
+         final double speedMph = 3600 * Double.valueOf(speedValue) / 1609;
+
+         //Compute the power value with the equation for the Travel Trac Fluid
+         // found here 
+         //https://github.com/mechgt/trainer-power/blob/0281a9fd3b02bd29e59faa8fd8c48c273e9c98e2/TrainerPower/TrainerData.xml#L1083
+         //The generic equation:
+         //https://github.com/mechgt/trainer-power/blob/0281a9fd3b02bd29e59faa8fd8c48c273e9c98e2/TrainerPower/Data/Trainer.cs#L301
+
+         final double powerValue = -1.69361180854322 +
+               4.8316011670131 * speedMph -
+               0.104979886788859 * Math.pow(speedMph, 2) +
+               0.0169930755283735 * Math.pow(speedMph, 3);
+
+         final String powerDataContent = getPowerDataContent((int) Math.round(powerValue), line.contains("max_speed"));
+         final String lineWithPower = line.replace("m/s", powerDataContent);
+
+         linesWithPowerData.add(lineWithPower);
+
+      }
+
+      return linesWithPowerData;
+   }
+
+   private static String getPowerDataContent(final int roundedPowerValue, final boolean averagePower) {
+
+      final StringBuilder powerDataContent = new StringBuilder("m/s,");
+
+      if (averagePower) {
+         powerDataContent.append("avg_");
+      }
+
+      powerDataContent.append("power,\"" + roundedPowerValue + "\",watts");
+
+      return powerDataContent.toString();
    }
 
    private static void writeDataWithPower(final String fileNameWithoutExtension, final List<String> dataWithPower) {
