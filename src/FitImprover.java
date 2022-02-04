@@ -3,7 +3,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,11 +11,12 @@ import java.util.List;
 
 public class FitImprover {
 
-   private static File fitCSVTool = new File(FitImprover.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+   private static File fitCSVTool = new File(
+		    ClassLoader.getSystemClassLoader().getResource(".").getPath(),
+				   "FitCSVTool.jar");
 
    public static void main(final String[] args) {
 
-   System.out.println(fitCSVTool.getAbsolutePath());
       if (args.length != 1) {
          System.out.println("No file supplied. Aborting");
          return;
@@ -32,6 +32,7 @@ public class FitImprover {
       final String fileName = args[0];
       //Convert the FIT file to CSV
       convertFitToCsv(fileName);
+      
       final String fileNameWithoutExtension = fileName.substring(0, fileName.lastIndexOf('.'));
 
       //Remove the data that will prevent from converting back to FIT format
@@ -113,8 +114,7 @@ public class FitImprover {
 
    private static void writeDataWithPower(final String fileNameWithoutExtension, final List<String> dataWithPower) {
 
-      final String currentDirectory = getCurrentDirectory();
-      final File fixedCsvFile = new File(currentDirectory, fileNameWithoutExtension + "-withPower" + ".csv");
+      final File fixedCsvFile = new File(fileNameWithoutExtension + "-withPower" + ".csv");
 
       try {
          fixedCsvFile.createNewFile();
@@ -143,8 +143,7 @@ public class FitImprover {
 
       try {
 
-         final String currentDirectory = getCurrentDirectory();
-         final File csvFile = new File(currentDirectory, fileName + ".csv");
+         final File csvFile = new File(fileName + ".csv");
          final List<String> lines = Files.readAllLines(Paths.get(csvFile.toURI()));
 
          //Write the modified lines in the new csv file
@@ -204,9 +203,8 @@ public class FitImprover {
       System.out.println("--STARTING THE CSV TO FIT CONVERSION--");
       System.out.println("");
 
-      final String currentDirectory = getCurrentDirectory();
-      final File csvFileToConvert = new File(currentDirectory, fileNameWithoutExtension + ".csv");
-      final File convertedFitFile = new File(currentDirectory, fileNameWithoutExtension + ".fit");
+      final File csvFileToConvert = new File(fileNameWithoutExtension + ".csv");
+      final File convertedFitFile = new File(fileNameWithoutExtension + ".fit");
 
       final ProcessBuilder processBuilder = new ProcessBuilder(
             "java",
@@ -228,25 +226,12 @@ public class FitImprover {
 
    }
 
-   private static String getCurrentDirectory() {
-
-      String currentDirectory = "";
-      try {
-         currentDirectory = new File(FitImprover.class.getProtectionDomain().getCodeSource().getLocation()
-               .toURI()).getPath();
-      } catch (final URISyntaxException e) {
-         e.printStackTrace();
-      }
-
-      return currentDirectory;
-   }
-
    private static void convertFitToCsv(final String fileName) {
 
       System.out.println("--STARTING THE FIT TO CSV CONVERSION--");
       System.out.println("");
 
-      final File fileToConvert = new File(FitImprover.class.getResource(fileName).getFile());
+      final File fileToConvert = new File(fileName);
 
       final ProcessBuilder processBuilder = new ProcessBuilder("java", "-jar", fitCSVTool.getAbsolutePath(), fileToConvert.getAbsolutePath());
       try {
