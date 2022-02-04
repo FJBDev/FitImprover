@@ -12,17 +12,20 @@ import java.util.List;
 
 public class FitImprover {
 
-   private static File fitCSVTool = new File(FitImprover.class.getResource("FitCSVTool.jar").getFile());
+   private static File fitCSVTool = new File(FitImprover.class.getProtectionDomain().getCodeSource().getLocation().getPath());
 
    public static void main(final String[] args) {
 
+   System.out.println(fitCSVTool.getAbsolutePath());
       if (args.length != 1) {
          System.out.println("No file supplied. Aborting");
          return;
       }
 
       if (!fitCSVTool.exists()) {
-         System.out.println("FitCSVTool.jar could not be found. Aborting");
+         System.out.println("FitCSVTool.jar could not be found at this location"+
+      fitCSVTool.getAbsolutePath()+
+      ". Aborting");
          return;
       }
 
